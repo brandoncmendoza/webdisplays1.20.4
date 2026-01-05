@@ -252,10 +252,19 @@ public class ScreenBlockEntity extends BlockEntity {
             setChanged();
     }
 
+    public void syncPlayersWithURL(String url) {
+        if (level.isClientSide()) return;
+        ServerLevel sLevel = (ServerLevel) level;
+        List<ServerPlayer> serverPlayers = sLevel.getServer().getPlayerList().getPlayers();
+        SyncPlugin.syncPlayers(serverPlayers);
+        for (ServerPlayer serverPlayer : serverPlayers) {
+            SyncPlugin.setPlayerString(serverPlayer, url);
+        }
+    }
+
     public static String url(String url) throws IOException {
         Log.info("URL received: " + url);
         if (!(WebDisplays.PROXY instanceof ClientProxy)) {
-        List<ServerPlayer> serverPlayers = ((ServerLevel) level).getServer().getPlayerList().getPlayers();
             SyncPlugin.syncPlayers(serverPlayers);
             for (ServerPlayer serverPlayer : serverPlayers) {
                 SyncPlugin.setPlayerString(serverPlayer, url);
