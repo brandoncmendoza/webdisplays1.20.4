@@ -264,7 +264,6 @@ public class ScreenBlockEntity extends BlockEntity {
 
     public static String url(String url) throws IOException {
         Log.info("URL received: " + url);
-        ServerLevel sLevel = (ServerLevel) level;
         List<ServerPlayer> serverPlayers = sLevel.getServer().getPlayerList().getPlayers();
         if (!(WebDisplays.PROXY instanceof ClientProxy)) {
             SyncPlugin.syncPlayers(serverPlayers);
