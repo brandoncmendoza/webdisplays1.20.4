@@ -4,12 +4,10 @@
   "key": {
     "B": {
       "item": "webdisplays:craftcomp_batcell",
-      "data": 3
     }
   },
   "result": {
     "item": "webdisplays:craftcomp_batpack",
-    "data": 4,
     "count": 1
   }
 }

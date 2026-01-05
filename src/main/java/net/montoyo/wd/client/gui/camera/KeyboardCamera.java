@@ -1,4 +1,6 @@
 package net.montoyo.wd.client.gui.camera;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.arguments.EntityAnchorArgument;

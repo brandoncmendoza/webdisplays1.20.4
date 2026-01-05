@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.item;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
+
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
@@ -15,7 +18,7 @@ import java.util.List;
 
 public interface WDItem {
     static void addInformation(@Nullable List<String> tt) {
-        if (tt != null && WebDisplays.PROXY.isShiftDown())
+        if (tt != null && (FMLEnvironment.dist == Dist.CLIENT ? ((net.montoyo.wd.client.ClientProxy) WebDisplays.PROXY).isShiftDown() : false))
             tt.add(ChatFormatting.GRAY + I18n.get("item.webdisplays.wiki"));
     }
 

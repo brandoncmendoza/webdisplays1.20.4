@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.utilities.data;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 public enum Rotation {
     ROT_0(0.0f, false),

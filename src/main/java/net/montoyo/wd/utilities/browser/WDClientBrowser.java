@@ -1,4 +1,6 @@
 package net.montoyo.wd.utilities.browser;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.cinemamod.mcef.MCEFBrowser;
 import com.cinemamod.mcef.MCEFClient;

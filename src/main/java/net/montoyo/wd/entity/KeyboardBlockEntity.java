@@ -71,8 +71,9 @@ public class KeyboardBlockEntity extends AbstractPeripheralBlockEntity {
                 tes.type(screenSide, "t" + rnd, getBlockPos());
 
                 Player owner = level.getPlayerByUUID(scr.owner.uuid);
-                if(owner instanceof ServerPlayer && ent instanceof Ocelot)
-                    WebDisplays.INSTANCE.criterionKeyboardCat.trigger(((ServerPlayer) owner).getAdvancements());
+                // TODO: Fix criterion - commented out for 1.20.4 port
+                // if(owner instanceof ServerPlayer && ent instanceof Ocelot)
+                //     WebDisplays.INSTANCE.criterionKeyboardCat.trigger(((ServerPlayer) owner).getAdvancements());
             }
         }
     }

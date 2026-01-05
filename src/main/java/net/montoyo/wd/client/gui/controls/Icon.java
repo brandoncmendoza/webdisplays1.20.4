@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.client.gui.controls;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -42,7 +44,7 @@ public class Icon extends BasicControl {
         v1 = json.getDouble("v1", 0.0);
         u2 = json.getDouble("u2", 1.0);
         v2 = json.getDouble("v2", 1.0);
-        texture = new ResourceLocation(json.getString("resourceLocation", ""));
+        texture = ResourceLocation.parse(json.getString("resourceLocation", ""));
     }
 
     @Override

@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.client.renderers;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.google.common.collect.ImmutableList;
 import net.minecraft.client.renderer.RenderType;

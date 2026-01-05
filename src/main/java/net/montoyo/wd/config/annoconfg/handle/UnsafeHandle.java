@@ -1,4 +1,6 @@
 package net.montoyo.wd.config.annoconfg.handle;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.montoyo.wd.config.annoconfg.util.EnumType;
 import sun.misc.Unsafe;

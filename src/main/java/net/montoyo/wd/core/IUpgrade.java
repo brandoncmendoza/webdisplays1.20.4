@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.core;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;

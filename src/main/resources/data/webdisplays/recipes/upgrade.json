@@ -11,12 +11,10 @@
     },
     "E": {
       "item": "webdisplays:craftcomp_extcard",
-      "data": 7
     }
   },
   "result": {
     "item": "webdisplays:craftcomp_upgrade",
-    "data": 1,
     "count": 1
   }
 }

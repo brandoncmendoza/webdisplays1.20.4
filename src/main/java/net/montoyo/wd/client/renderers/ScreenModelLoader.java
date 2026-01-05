@@ -1,4 +1,6 @@
 package net.montoyo.wd.client.renderers;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
@@ -19,16 +21,16 @@ import java.util.Set;
 import java.util.function.Function;
 
 public class ScreenModelLoader implements IGeometryLoader<ScreenModelLoader.ScreenModelGeometry> {
-    public static final ResourceLocation SCREEN_LOADER = new ResourceLocation("webdisplays", "screen_loader");
+    public static final ResourceLocation SCREEN_LOADER = ResourceLocation.fromNamespaceAndPath("webdisplays", "screen_loader");
 
-    public static final ResourceLocation SCREEN_SIDE = new ResourceLocation("webdisplays", "block/screen");
+    public static final ResourceLocation SCREEN_SIDE = ResourceLocation.fromNamespaceAndPath("webdisplays", "block/screen");
 
     private static final ResourceLocation[] SIDES = new ResourceLocation[16];
     public static final Material[] MATERIALS_SIDES = new Material[16];
     
     static {
         for (int i = 0; i < SIDES.length; i++) {
-            SIDES[i] = new ResourceLocation(SCREEN_SIDE.getNamespace(), SCREEN_SIDE.getPath() + i);
+            SIDES[i] = ResourceLocation.fromNamespaceAndPath(SCREEN_SIDE.getNamespace(), SCREEN_SIDE.getPath() + i);
             MATERIALS_SIDES[i] = ForgeHooksClient.getBlockMaterial(SIDES[i]);
         }
     }

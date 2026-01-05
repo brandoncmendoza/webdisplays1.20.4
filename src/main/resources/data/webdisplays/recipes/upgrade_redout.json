@@ -4,7 +4,6 @@
   "key": {
     "U": {
       "item": "webdisplays:craftcomp_upgrade",
-      "data": 1
     },
     "R": {
       "item": "minecraft:redstone_torch"
@@ -12,7 +11,6 @@
   },
   "result": {
     "item": "webdisplays:upgrade_redoutput",
-    "data": 2,
     "count": 1
   }
 }

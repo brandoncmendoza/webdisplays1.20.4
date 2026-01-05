@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.client.gui;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.cinemamod.mcef.MCEFBrowser;
 import com.google.gson.JsonObject;
@@ -66,6 +68,7 @@ public class GuiMinePad extends WDScreen {
 
 		super.init();
 
+            if (pad.view == null || !(pad.view instanceof com.cinemamod.mcef.MCEFBrowser)) return;
 		((MCEFBrowser) pad.view).setCursor(CefCursorType.fromId(pad.activeCursor));
 		((MCEFBrowser) pad.view).setCursorChangeListener((id) -> {
 			pad.activeCursor = id;
@@ -84,7 +87,7 @@ public class GuiMinePad extends WDScreen {
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float ptt) {
 		width = trueWidth;
 		height = trueHeight;
-		renderBackground(graphics);
+		renderBackground(graphics, 0, 0, 0.0f);
 		width = (int) vw;
 		height = (int) vh;
 
@@ -101,11 +104,13 @@ public class GuiMinePad extends WDScreen {
 		t.end();
 
 		if (pad.view != null) {
+                if (!(pad.view instanceof com.cinemamod.mcef.MCEFBrowser)) return;
+                com.cinemamod.mcef.MCEFBrowser mcefBrowser = (com.cinemamod.mcef.MCEFBrowser) pad.view;
+                if (mcefBrowser.getRenderer() == null) return;
 //            pad.view.draw(poseStack, vx, vy + vh, vx + vw, vy);
-			RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
-			RenderSystem.disableDepthTest();
-			RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
-			RenderSystem.setShaderTexture(0, ((MCEFBrowser) pad.view).getRenderer().getTextureID());
+                        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+                        RenderSystem.disableDepthTest();
+                        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
 			t = Tesselator.getInstance();
 			BufferBuilder buffer = t.getBuilder();
 			buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -143,6 +148,7 @@ public class GuiMinePad extends WDScreen {
 	@Override
 	public boolean charTyped(char codePoint, int modifiers) {
 		if (pad.view != null) {
+                if (!(pad.view instanceof com.cinemamod.mcef.MCEFBrowser)) return false;
 			((MCEFBrowser) pad.view).sendKeyTyped(codePoint, modifiers);
 			return true;
 		} else {
@@ -172,6 +178,7 @@ public class GuiMinePad extends WDScreen {
 		}
 
 		if (pad.view != null) {
+                if (!(pad.view instanceof com.cinemamod.mcef.MCEFBrowser)) return false;
 			if (pressed)
 				((MCEFBrowser) pad.view).sendKeyPress(keyCode, scanCode, modifiers);
 			else
@@ -203,17 +210,13 @@ public class GuiMinePad extends WDScreen {
 		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
-	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-		double mx = (mouseX - vx) / vw;
-		double my = (mouseY - vy) / vh;
-		int sx = (int) (mx * WebDisplays.INSTANCE.padResX);
-		int sy = (int) (my * WebDisplays.INSTANCE.padResY);
-		// TODO: this doesn't work, and I don't understand why?
-		((MCEFBrowser) pad.view).sendMouseWheel(sx, sy, amount, (hasControlDown() && !hasAltDown() && !hasShiftDown()) ? GLFW.GLFW_MOD_CONTROL : 0);
-
-		return super.mouseScrolled(mouseX, mouseY, amount);
-	}
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
+        if (pad != null && pad.view != null) {
+            ((MCEFBrowser) pad.view).sendMouseWheel((int) mouseX, (int) mouseY, 0, (int) deltaY);
+        }
+        return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
+    }
 
 	public void capturedMouse(double scaledX, double scaledY, int sx, int sy) {
 		double centerX = (int) (0.5 * (double) this.minecraft.getWindow().getGuiScaledWidth());

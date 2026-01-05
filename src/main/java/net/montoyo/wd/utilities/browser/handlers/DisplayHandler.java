@@ -1,10 +1,12 @@
 package net.montoyo.wd.utilities.browser.handlers;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.client.ClientProxy;
 import net.montoyo.wd.utilities.browser.handlers.js.Scripts;
 import net.montoyo.wd.entity.ScreenBlockEntity;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.server_bound.C2SMessageMinepadUrl;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
@@ -29,7 +31,7 @@ public class DisplayHandler implements CefDisplayHandler {
                         pd.view.loadURL(WebDisplays.BLACKLIST_URL);
                     else {
                         pd.updateTime(); //Avoid spamming the server with porn URLs
-                        WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(pd.id, url));
+                        PacketSender.sendToServer(new C2SMessageMinepadUrl(pd.id, url));
                     }
 
                     break;

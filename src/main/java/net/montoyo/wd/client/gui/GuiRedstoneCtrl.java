@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.client.gui;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -42,7 +45,7 @@ public class GuiRedstoneCtrl extends WDScreen {
     @Override
     public void init() {
         super.init();
-        loadFrom(new ResourceLocation("webdisplays", "gui/redstonectrl.json"));
+        loadFrom(ResourceLocation.fromNamespaceAndPath("webdisplays", "gui/redstonectrl.json"));
         tfRisingEdge.setText(risingEdgeURL);
         tfFallingEdge.setText(fallingEdgeURL);
     }
@@ -54,7 +57,7 @@ public class GuiRedstoneCtrl extends WDScreen {
 //
 //            String rising = mcef.punycode(Util.addProtocol(tfRisingEdge.getText()));
 //            String falling = mcef.punycode(Util.addProtocol(tfFallingEdge.getText()));
-//            WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageRedstoneCtrl(pos, rising, falling));
+//            PacketSender.sendToServer(new C2SMessageRedstoneCtrl(pos, rising, falling));
 //        }
 //
 //        minecraft.setScreen(null);

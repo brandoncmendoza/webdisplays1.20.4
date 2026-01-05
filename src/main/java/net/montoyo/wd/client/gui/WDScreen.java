@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.client.gui;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -23,7 +26,6 @@ import net.montoyo.wd.client.gui.controls.Event;
 import net.montoyo.wd.client.gui.loading.FillControl;
 import net.montoyo.wd.client.gui.loading.GuiLoader;
 import net.montoyo.wd.client.gui.loading.JsonOWrapper;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.server_bound.C2SMessageACQuery;
 import net.montoyo.wd.utilities.*;
 import net.montoyo.wd.utilities.data.Bounds;
@@ -118,7 +120,7 @@ public abstract class WDScreen extends Screen {
     @Override
     public void render(GuiGraphics poseStack, int mouseX, int mouseY, float ptt) {
         if(defaultBackground)
-            renderBackground(poseStack);
+            renderBackground(poseStack, 0, 0, 0.0f);
 
         RenderSystem.setShaderColor(1.f, 1.f, 1.f, 1.f);
         
@@ -203,11 +205,11 @@ public abstract class WDScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         boolean scrolled = false;
 
         for(Control ctrl : controls)
-            scrolled = scrolled || ctrl.mouseScroll(mouseX, mouseY, delta);
+            scrolled = scrolled || ((net.minecraft.client.gui.components.events.GuiEventListener)ctrl).mouseScrolled(mouseX, mouseY, 0.0, 0.0);
 
         return scrolled;
     }
@@ -348,7 +350,7 @@ public abstract class WDScreen extends Screen {
     }
 
     protected void requestAutocomplete(String beginning, boolean matchExact) {
-        WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageACQuery(beginning, matchExact));
+        PacketSender.sendToServer(new C2SMessageACQuery(beginning, matchExact));
     }
 
     public void onAutocompleteResult(NameUUIDPair pairs[]) {

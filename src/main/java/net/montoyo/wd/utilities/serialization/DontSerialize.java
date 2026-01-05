@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.utilities.serialization;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

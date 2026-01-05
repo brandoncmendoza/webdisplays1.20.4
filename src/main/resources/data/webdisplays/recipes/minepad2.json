@@ -11,12 +11,10 @@
     },
     "M": {
       "item": "webdisplays:minepad",
-      "data": 0
     }
   },
   "result": {
     "item": "webdisplays:minepad",
-    "data": 1,
     "count": 1
   }
 }

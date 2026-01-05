@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.utilities;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 public final class NibbleArray {
     private final byte[] data;

@@ -1,4 +1,8 @@
 package net.montoyo.wd.controls;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.event.network.CustomPayloadEvent;
+import java.util.function.Supplier;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -6,7 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.network.NetworkEvent;
 import net.montoyo.wd.controls.builtin.*;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.utilities.data.BlockSide;
@@ -32,7 +35,7 @@ public class ScreenControlRegistry {
 			if (FMLEnvironment.dist.isClient()) {
 				boolean shouldThrow = false;
 				try {
-					Method m = type.clazz.getMethod("handleClient", BlockPos.class, BlockSide.class, ScreenBlockEntity.class, NetworkEvent.Context.class);
+					Method m = type.clazz.getMethod("handleClient", BlockPos.class, BlockSide.class, ScreenBlockEntity.class, CustomPayloadEvent.Context.class);
 					OnlyIn onlyIn = m.getAnnotation(OnlyIn.class);
 					if (onlyIn == null) shouldThrow = true;
 					Dist d = onlyIn.value(); // idc if this throws, lol
@@ -67,7 +70,7 @@ public class ScreenControlRegistry {
 	}
 	
 	public static ScreenControl parse(FriendlyByteBuf buf) {
-		return CONTROL_TYPES.get(new ResourceLocation(buf.readUtf()))
+		return CONTROL_TYPES.get(ResourceLocation.parse(buf.readUtf()))
 				.deserializer.apply(buf);
 	}
 	

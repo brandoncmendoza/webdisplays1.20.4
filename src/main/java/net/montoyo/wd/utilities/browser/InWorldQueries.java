@@ -1,4 +1,6 @@
 package net.montoyo.wd.utilities.browser;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.utilities.browser.handlers.js.queries.GetSizeQuery;

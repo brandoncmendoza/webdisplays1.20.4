@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.registry;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;

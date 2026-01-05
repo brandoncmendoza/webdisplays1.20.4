@@ -1,4 +1,6 @@
 package net.montoyo.wd.block.item;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

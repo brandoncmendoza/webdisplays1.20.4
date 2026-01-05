@@ -3,6 +3,12 @@
  */
 
 package net.montoyo.wd.item;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
+
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
+
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,7 +38,7 @@ public class ItemMinePad2 extends Item implements WDItem {
         super(properties
                         .stacksTo(1)
                         .defaultDurability(0)
-//				.tab(WebDisplays.CREATIVE_TAB)
+//                              .tab(WebDisplays.CREATIVE_TAB)
         );
     }
 
@@ -51,18 +57,18 @@ public class ItemMinePad2 extends Item implements WDItem {
 
         if (ply.isShiftKeyDown()) {
             if (world.isClientSide)
-                WebDisplays.PROXY.displaySetPadURLGui(is, getURL(is));
+                if (FMLEnvironment.dist == Dist.CLIENT) ((net.montoyo.wd.client.ClientProxy) WebDisplays.PROXY).displaySetPadURLGui(is, getURL(is));
 
             ok = true;
         } else if (is.getTag() != null && is.getTag().contains("PadID")) {
             if (world.isClientSide)
-                WebDisplays.PROXY.openMinePadGui(is.getTag().getUUID("PadID"));
+                if (FMLEnvironment.dist == Dist.CLIENT) ((net.montoyo.wd.client.ClientProxy) WebDisplays.PROXY).openMinePadGui(is.getTag().getUUID("PadID"));
 
             ok = true;
         } else {
             UUID uuid = UUID.randomUUID();
             String url = getURL(is);
-            WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(uuid, url));
+            // TODO: Fix networking - WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(uuid, url));
             is.getOrCreateTag().putUUID("PadID", uuid);
 
             ok = true;
@@ -98,8 +104,9 @@ public class ItemMinePad2 extends Item implements WDItem {
                     ent.setRemoved(Entity.RemovalReason.CHANGED_DIMENSION);
 
                     Player ply = ent.level().getPlayerByUUID(thrower);
-                    if (ply != null && ply instanceof ServerPlayer)
-                        WebDisplays.INSTANCE.criterionPadBreak.trigger(((ServerPlayer) ply).getAdvancements());
+                    // TODO: Fix criterion - commented out for 1.20.4 port
+                    // if (ply != null && ply instanceof ServerPlayer)
+                    //      WebDisplays.INSTANCE.criterionPadBreak.trigger(((ServerPlayer) ply).getAdvancements());
                 }
             }
         }

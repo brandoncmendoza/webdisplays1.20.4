@@ -3,6 +3,10 @@
  */
 
 package net.montoyo.wd.block;
+import net.minecraft.server.level.ServerLevel;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -28,7 +32,6 @@ import net.minecraftforge.network.PacketDistributor;
 import net.montoyo.wd.core.DefaultPeripheral;
 import net.montoyo.wd.entity.KeyboardBlockEntity;
 import net.montoyo.wd.item.ItemLinker;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.client_bound.S2CMessageCloseGui;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,7 +133,7 @@ public class KeyboardBlockLeft extends PeripheralBlock {
         removeRightPiece(state, world, pos);
         if (setState)
             world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-        WDNetworkRegistry.INSTANCE.send(PacketDistributor.NEAR.with(() -> point(world, pos)), new S2CMessageCloseGui(pos));
+        PacketSender.sendToNear(new S2CMessageCloseGui(pos), (ServerLevel)world, pos, 64.0);
     }
     
     @Override

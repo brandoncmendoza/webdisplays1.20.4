@@ -1,4 +1,6 @@
 package net.montoyo.wd.client.audio;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -17,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.CompletableFuture;
 
 public class WDAudioSource implements SoundInstance {
-    private static final ResourceLocation location = new ResourceLocation("webdisplays:audio_source");
+    private static final ResourceLocation location = ResourceLocation.parse("webdisplays:audio_source");
     private static final WeighedSoundEvents events = new WeighedSoundEvents(
             location, "webdisplays.browser"
     );

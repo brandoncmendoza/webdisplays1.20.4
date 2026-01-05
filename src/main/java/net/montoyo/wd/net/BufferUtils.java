@@ -1,4 +1,6 @@
 package net.montoyo.wd.net;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.montoyo.wd.utilities.math.Vector3i;

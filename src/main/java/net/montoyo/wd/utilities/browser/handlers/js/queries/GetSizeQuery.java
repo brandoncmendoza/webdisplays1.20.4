@@ -1,4 +1,6 @@
 package net.montoyo.wd.utilities.browser.handlers.js.queries;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.google.gson.JsonObject;
 import net.montoyo.wd.utilities.browser.WDBrowser;

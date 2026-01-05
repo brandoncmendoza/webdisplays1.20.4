@@ -1,15 +1,17 @@
 /*
  * Copyright (C) 2018 BARBOTIN Nicolas
  */
-
 package net.montoyo.wd.core;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.google.gson.JsonObject;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.advancements.CriterionTrigger;
-import net.minecraft.advancements.critereon.AbstractCriterionTriggerInstance;
 import net.minecraft.advancements.critereon.ContextAwarePredicate;
-import net.minecraft.advancements.critereon.DeserializationContext;
 import net.minecraft.advancements.critereon.EntityPredicate;
+import net.minecraft.advancements.critereon.SimpleCriterionTrigger;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.PlayerAdvancements;
 import org.jetbrains.annotations.NotNull;
@@ -18,12 +20,30 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Optional;
 
-public class Criterion implements CriterionTrigger<Criterion.Instance> {
-    public static class Instance extends AbstractCriterionTriggerInstance {
-        public Instance(ResourceLocation id, ContextAwarePredicate arg2) {
-            super(id, arg2);
+public class Criterion extends SimpleCriterionTrigger<Criterion.Instance> {
+
+    public static class Instance implements SimpleCriterionTrigger.SimpleInstance {
+        private final ResourceLocation id;
+        private final Optional<ContextAwarePredicate> player;
+
+        public Instance(ResourceLocation id, Optional<ContextAwarePredicate> player) {
+            this.id = id;
+            this.player = player;
         }
+
+        @Override
+        public Optional<ContextAwarePredicate> player() {
+            return player;
+        }
+
+        public static final Codec<Instance> CODEC = RecordCodecBuilder.create(
+            inst -> inst.group(
+                ResourceLocation.CODEC.fieldOf("id").forGetter(Instance::id),
+                ContextAwarePredicate.CODEC.optionalFieldOf("player").forGetter(Instance::player)
+            ).apply(inst, Instance::new)
+        );
     }
 
     private final ResourceLocation id;
@@ -58,15 +78,19 @@ public class Criterion implements CriterionTrigger<Criterion.Instance> {
     }
 
     @Override
-    public @NotNull Instance createInstance(JsonObject json, DeserializationContext context) {
-        return new Instance(id, EntityPredicate.fromJson(json, "instance", context));
+    public Codec<Instance> codec() {
+        return Instance.CODEC;
+    }
+
+    @Override
+    public @NotNull Instance createInstance(JsonObject json, Optional<ContextAwarePredicate> player) {
+        return new Instance(id, player);
     }
 
     public void trigger(PlayerAdvancements ply) {
         ArrayList<Listener<Instance>> listeners = map.get(ply);
-
         if (listeners != null) {
-            Listener[] copy = listeners.toArray(new Listener[0]); //We need to make a copy, otherwise we get a ConcurrentModificationException
+            Listener[] copy = listeners.toArray(new Listener[0]);
             Arrays.stream(copy).forEach(l -> l.run(ply));
         }
     }

@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.client;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.montoyo.wd.miniserv.Constants;
 import net.montoyo.wd.miniserv.client.Client;

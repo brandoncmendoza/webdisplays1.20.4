@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.data;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -53,7 +55,7 @@ public class RedstoneCtrlData extends GuiData {
 
     @Override
     public void deserialize(FriendlyByteBuf buf) {
-        dimension = new ResourceLocation(buf.readUtf());
+        dimension = ResourceLocation.parse(buf.readUtf());
         pos = BufferUtils.readVec3i(buf);
         risingEdgeURL = buf.readUtf();
         fallingEdgeURL = buf.readUtf();

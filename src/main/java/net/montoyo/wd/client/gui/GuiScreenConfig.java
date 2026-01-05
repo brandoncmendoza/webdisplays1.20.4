@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.client.gui;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
@@ -18,7 +21,6 @@ import net.montoyo.wd.core.ScreenRights;
 import net.montoyo.wd.entity.ScreenData;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.item.WDItem;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.server_bound.C2SMessageScreenCtrl;
 import net.montoyo.wd.utilities.*;
 import net.montoyo.wd.utilities.math.Vector2i;
@@ -136,7 +138,7 @@ public class GuiScreenConfig extends WDScreen {
     @Override
     public void init() {
         super.init();
-        loadFrom(new ResourceLocation("webdisplays", "gui/screencfg.json"));
+        loadFrom(ResourceLocation.fromNamespaceAndPath("webdisplays", "gui/screencfg.json"));
 
         friendBoxes = new CheckBox[] { boxFResolution, boxFUpgrades, boxFOthers, boxFFriends, boxFClick, boxFSetUrl };
         boxFResolution.setUserdata(ScreenRights.MODIFY_SCREEN);
@@ -207,7 +209,7 @@ public class GuiScreenConfig extends WDScreen {
                 throw new NumberFormatException(); //I'm lazy
 
             if(x != scr.resolution.x || y != scr.resolution.y)
-                WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.resolution(tes, side, new Vector2i(x, y)));
+                PacketSender.sendToServer(C2SMessageScreenCtrl.resolution(tes, side, new Vector2i(x, y)));
         } catch(NumberFormatException ex) {
             //Roll back
             tfResX.setText("" + scr.resolution.x);
@@ -225,7 +227,7 @@ public class GuiScreenConfig extends WDScreen {
             clickSetRes();
         else if(ev.getSource() == btnChangeRot) {
             Rotation[] rots = Rotation.values();
-            WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, rots[(rotation.ordinal() + 1) % rots.length]));
+            PacketSender.sendToServer(new C2SMessageScreenCtrl(tes, side, rots[(rotation.ordinal() + 1) % rots.length]));
         }
     }
 
@@ -288,7 +290,7 @@ public class GuiScreenConfig extends WDScreen {
     @GuiSubscribe
     public void onRemovePlayer(List.EntryClick ev) {
         if(ev.getSource() == lstFriends)
-            WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, (NameUUIDPair) ev.getUserdata(), true));
+            PacketSender.sendToServer(new C2SMessageScreenCtrl(tes, side, (NameUUIDPair) ev.getUserdata(), true));
     }
 
     @GuiSubscribe
@@ -318,12 +320,12 @@ public class GuiScreenConfig extends WDScreen {
             } catch(NumberFormatException ex) {
                 cbLockRatio.setChecked(false);
             }
-        } else if(ev.getSource() == cbAutoVolume) WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.autoVol(tes, side, ev.isChecked()));
+        } else if(ev.getSource() == cbAutoVolume) PacketSender.sendToServer(C2SMessageScreenCtrl.autoVol(tes, side, ev.isChecked()));
     }
 
     @GuiSubscribe
     public void onRemoveUpgrade(UpgradeGroup.ClickEvent ev) {
-        WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, ev.getMouseOverStack()));
+        PacketSender.sendToServer(new C2SMessageScreenCtrl(tes, side, ev.getMouseOverStack()));
     }
 
     public boolean isFriendCheckbox(CheckBox cb) {
@@ -344,7 +346,7 @@ public class GuiScreenConfig extends WDScreen {
 
         if(adding) {
             if(!hasFriend(pairs[0]))
-                WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, pairs[0], false));
+                PacketSender.sendToServer(new C2SMessageScreenCtrl(tes, side, pairs[0], false));
 
             tfFriend.setDisabled(false);
             tfFriend.clear();
@@ -433,7 +435,7 @@ public class GuiScreenConfig extends WDScreen {
 
     @Override
     protected void sync() {
-        WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageScreenCtrl(tes, side, friendRights, otherRights));
+        PacketSender.sendToServer(new C2SMessageScreenCtrl(tes, side, friendRights, otherRights));
         Log.info("Sent sync packet");
     }
 

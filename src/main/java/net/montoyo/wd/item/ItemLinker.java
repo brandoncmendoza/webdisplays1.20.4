@@ -29,13 +29,11 @@ import javax.annotation.Nullable;
 
 public class ItemLinker extends Item implements WDItem {
     public ItemLinker(Properties properties) {
-        super(properties
-                        .stacksTo(1)
-//            .tab(WebDisplays.CREATIVE_TAB)
-        );
+        super(properties.stacksTo(1));
     }
 
     @Override
+    @Nonnull
     public InteractionResult useOn(UseOnContext context) {
         if (context.getLevel().isClientSide())
             return InteractionResult.SUCCESS;
@@ -70,9 +68,10 @@ public class ItemLinker extends Item implements WDItem {
 
                 if (target.connect(context.getLevel(), context.getClickedPos(), state, tePos, scrSide)) {
                     Util.toast(context.getPlayer(), ChatFormatting.AQUA, "linked");
-
-                    if (context.getPlayer() instanceof ServerPlayer)
-                        WebDisplays.INSTANCE.criterionLinkPeripheral.trigger(((ServerPlayer) context.getPlayer()).getAdvancements());
+                    
+                    // Comentado para evitar error de compilación en 1.20.4
+                    // if (context.getPlayer() instanceof ServerPlayer)
+                    //     WebDisplays.INSTANCE.criterionLinkPeripheral.trigger(((ServerPlayer) context.getPlayer()).getAdvancements());
                 } else
                     Util.toast(context.getPlayer(), "linkError");
 
@@ -102,13 +101,11 @@ public class ItemLinker extends Item implements WDItem {
         else if ((scr.rightsFor(context.getPlayer()) & ScreenRights.MANAGE_UPGRADES) == 0)
             Util.toast(context.getPlayer(), "restrictions");
         else {
-            tag = new CompoundTag();
+            tag = stack.getOrCreateTag();
             tag.putInt("ScreenX", pos.x);
             tag.putInt("ScreenY", pos.y);
             tag.putInt("ScreenZ", pos.z);
-            tag.putByte("ScreenSide", (byte) side.ordinal());
-
-            stack.setTag(tag);
+            tag.putInt("ScreenSide", (byte) side.ordinal());
             Util.toast(context.getPlayer(), ChatFormatting.AQUA, "screenSet2");
         }
 
@@ -118,6 +115,6 @@ public class ItemLinker extends Item implements WDItem {
     @Nullable
     @Override
     public String getWikiName(@Nonnull ItemStack is) {
-        return is.getItem().getName(is).getString();
+        return is.getHoverName().getString();
     }
 }

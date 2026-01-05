@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.block;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.BaseEntityBlock;

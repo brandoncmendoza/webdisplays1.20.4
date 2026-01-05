@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.data;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.FriendlyByteBuf;
@@ -11,7 +14,6 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.PacketDistributor;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.client_bound.S2CMessageOpenGui;
 
 import java.util.HashMap;
@@ -62,7 +64,7 @@ public abstract class GuiData {
     public abstract String getName();
 
     public void sendTo(ServerPlayer player) {
-        WDNetworkRegistry.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new S2CMessageOpenGui(this));
+        PacketSender.sendToPlayer(new S2CMessageOpenGui(this), player);
     }
 
     public abstract void serialize(FriendlyByteBuf buf);

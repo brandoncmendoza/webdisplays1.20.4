@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.utilities.data;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 public final class Bounds {
     public final int minX;

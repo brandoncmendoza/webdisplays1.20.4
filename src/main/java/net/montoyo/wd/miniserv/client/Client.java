@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.miniserv.client;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
@@ -39,6 +41,7 @@ public class Client extends AbstractClient implements Runnable {
     private final SecureRandom random = new SecureRandom();
     private KeyPair keyPair;
     private byte[] key;
+    public void setKey(byte[] k) { this.key = k; }
     private SocketAddress address;
     private volatile boolean running;
     private volatile boolean connected;

@@ -1,46 +1,32 @@
-/*
- * Copyright (C) 2018 BARBOTIN Nicolas
- */
-
 package net.montoyo.wd.net.client_bound;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.montoyo.wd.WebDisplays;
-import net.montoyo.wd.miniserv.client.Client;
-import net.montoyo.wd.net.Packet;
-import net.montoyo.wd.net.server_bound.C2SMessageMiniservConnect;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
 
-public class S2CMessageServerInfo extends Packet {
-	
-	private int miniservPort;
-	
-	public S2CMessageServerInfo(int msPort) {
-		miniservPort = msPort;
-	}
-	
-	public S2CMessageServerInfo(FriendlyByteBuf buf) {
-		super(buf);
-		miniservPort = buf.readShort();
-	}
-	
-	@Override
-	public void write(FriendlyByteBuf buf) {
-		buf.writeShort(miniservPort);
-	}
-	
-	@Override
-	public void handle(NetworkEvent.Context ctx) {
-		if (checkClient(ctx)) {
-			try {
-				WebDisplays.PROXY.setMiniservClientPort(miniservPort);
-				C2SMessageMiniservConnect message = Client.getInstance().beginConnection();
-				respond(ctx, message);
-				ctx.setPacketHandled(true);
-			} catch (Throwable err) {
-				err.printStackTrace();
-				throw new RuntimeException(err);
-			}
-		}
-	}
+public class S2CMessageServerInfo {
+    private final int port;
+
+    public S2CMessageServerInfo(int port) {
+        this.port = port;
+    }
+
+    public S2CMessageServerInfo(FriendlyByteBuf buf) {
+        this.port = buf.readInt();
+    }
+
+    public void write(FriendlyByteBuf buf) {
+        buf.writeInt(port);
+    }
+
+    public static void handle(S2CMessageServerInfo msg, CustomPayloadEvent.Context ctx) {
+        ctx.enqueueWork(() -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                WebDisplays.INSTANCE.miniservPort = msg.port;
+            }
+        });
+        ctx.setPacketHandled(true);
+    }
 }

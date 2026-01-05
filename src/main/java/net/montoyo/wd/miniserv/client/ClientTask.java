@@ -3,6 +3,14 @@
  */
 
 package net.montoyo.wd.miniserv.client;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
+
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
+
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.montoyo.wd.WebDisplays;
 
@@ -22,7 +30,7 @@ public abstract class ClientTask<T extends ClientTask> {
         //Called by Client, don't call it from a ClientTask!
         if(finishCallback != null && !isCanceled()) {
             if(runCallbackOnMcThread)
-                WebDisplays.PROXY.enqueue(() -> finishCallback.accept((T) this));
+                if (FMLEnvironment.dist == Dist.CLIENT) ((net.montoyo.wd.client.ClientProxy) WebDisplays.PROXY).enqueue(() -> finishCallback.accept((T) this));
             else
                 finishCallback.accept((T) this);
         }

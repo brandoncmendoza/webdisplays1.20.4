@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.core;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.montoyo.wd.utilities.serialization.Util;

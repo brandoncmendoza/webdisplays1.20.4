@@ -1,4 +1,6 @@
 package net.montoyo.wd.config.annoconfg.annotation.format;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraftforge.fml.config.ModConfig;
 

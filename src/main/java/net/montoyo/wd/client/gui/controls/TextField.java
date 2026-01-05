@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.client.gui.controls;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
@@ -199,7 +201,7 @@ public class TextField extends Control {
     
     @Override
     public boolean mouseScroll(double mouseX, double mouseY, double amount) {
-        return field.mouseScrolled(mouseX, mouseY, amount);
+        return field.mouseScrolled(mouseX, mouseY, 0.0, amount);
     }
     
     @Override

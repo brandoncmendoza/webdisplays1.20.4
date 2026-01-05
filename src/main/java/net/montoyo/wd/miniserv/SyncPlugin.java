@@ -1,4 +1,7 @@
 package net.montoyo.wd.miniserv;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.server.level.ServerPlayer;
 
@@ -31,7 +34,7 @@ public class SyncPlugin {
         if (syncedPlayersList != null) {
             for (ServerPlayer syncedPlayer : syncedPlayersList) {
                 if(!syncedPlayer.hasDisconnected()) {
-//                    WDNetworkRegistry.INSTANCE.sendToServer(new SMessageGetUrl(URL.get(syncedPlayer)));
+//                    PacketSender.sendToServer(new SMessageGetUrl(URL.get(syncedPlayer)));
                 }
             }
         }

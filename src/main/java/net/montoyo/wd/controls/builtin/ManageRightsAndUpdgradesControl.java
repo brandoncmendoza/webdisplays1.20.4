@@ -7,119 +7,82 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.montoyo.wd.controls.ScreenControl;
+import net.montoyo.wd.core.IUpgrade;
 import net.montoyo.wd.core.MissingPermissionException;
 import net.montoyo.wd.core.ScreenRights;
-import net.montoyo.wd.entity.ScreenData;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.utilities.data.BlockSide;
+import net.montoyo.wd.utilities.serialization.Util;
 
 import java.util.function.Function;
 
-/**
- * TODO: I'm considering merging this with {@link ModifyFriendListControl} to make ManageScreenControl
- */
-@Deprecated
 public class ManageRightsAndUpdgradesControl extends ScreenControl {
-	public static final ResourceLocation id = new ResourceLocation("webdisplays:mod_rights_upgrades");
-	
-	public enum ControlType {
-		RIGHTS, UPGRADES
-	}
-	
-	ControlType type;
-	boolean adding;
-	ItemStack toRemove;
-	
-	private int friendRights;
-	private int otherRights;
-	
-	public ManageRightsAndUpdgradesControl(boolean adding, ItemStack toRemove) {
-		super(id);
-		this.adding = adding;
-		type = ControlType.UPGRADES;
-		this.toRemove = toRemove;
-	}
-	
-	public ManageRightsAndUpdgradesControl(int friendRights, int otherRights) {
-		super(id);
-		type = ControlType.RIGHTS;
-		this.friendRights = friendRights;
-		this.otherRights = otherRights;
-	}
-	
-	public ManageRightsAndUpdgradesControl(FriendlyByteBuf buf) {
-		super(id);
-		type = ControlType.values()[buf.readByte()];
-		switch (type) {
-			case UPGRADES -> {
-				adding = buf.readBoolean();
-				toRemove = buf.readItem();
-			}
-			case RIGHTS -> {
-				friendRights = buf.readInt();
-				otherRights = buf.readInt();
-			}
-		}
-	}
-	
-	@Override
-	public void write(FriendlyByteBuf buf) {
-		buf.writeByte(type.ordinal());
-		switch (type) {
-			case UPGRADES -> {
-				buf.writeBoolean(adding);
-				buf.writeItem(toRemove);
-			}
-			case RIGHTS -> {
-				buf.writeInt(friendRights);
-				buf.writeInt(otherRights);
-			}
-		}
-	}
-	
-	@Override
-	public void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx, Function<Integer, Boolean> permissionChecker) throws MissingPermissionException {
-		ServerPlayer player = ctx.getSender();
-		switch (type) {
-			case UPGRADES -> {
-				checkPerms(ScreenRights.MANAGE_UPGRADES, permissionChecker, ctx.getSender());
-				if (adding)
-					throw new RuntimeException("Cannot add an upgrade from the client");
-				else tes.removeUpgrade(side, toRemove, player);
-			}
-			case RIGHTS -> {
-				ScreenData scr = tes.getScreen(side);
-				
-				int fr = scr.owner.uuid.equals(player.getGameProfile().getId()) ? friendRights : scr.friendRights;
-				int or = (scr.rightsFor(player) & ScreenRights.MANAGE_OTHER_RIGHTS) == 0 ? scr.otherRights : otherRights;
-				
-				if(scr.friendRights != fr || scr.otherRights != or)
-					tes.setRights(player, side, fr, or);
-			}
-		}
-	}
-	
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx) {
-		ServerPlayer player = ctx.getSender();
-		switch (type) {
-			case UPGRADES -> {
-				if (adding)
-					tes.addUpgrade(side, toRemove, player, true);
-				else tes.removeUpgrade(side, toRemove, player);
-			}
-			case RIGHTS -> {
-				ScreenData scr = tes.getScreen(side);
-				
-				int fr = friendRights;
-				int or = otherRights;
-				
-				if(scr.friendRights != fr || scr.otherRights != or)
-					tes.setRights(player, side, fr, or);
-			}
-		}
-	}
+    public static final ResourceLocation id = ResourceLocation.tryParse("webdisplays:mod_rights_upgrades");
+
+    private int friendRights;
+    private int otherRights;
+    private ItemStack itemStack;
+
+    public ManageRightsAndUpdgradesControl() {
+        super(id);
+    }
+
+    public ManageRightsAndUpdgradesControl(int fr, int or) {
+        super(id);
+        friendRights = fr;
+        otherRights = or;
+        itemStack = null;
+    }
+
+    public ManageRightsAndUpdgradesControl(ItemStack is) {
+        super(id);
+        itemStack = is;
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        if (itemStack == null) {
+            buf.writeBoolean(false);
+            buf.writeInt(friendRights);
+            buf.writeInt(otherRights);
+        } else {
+            buf.writeBoolean(true);
+            buf.writeItem(itemStack);
+        }
+    }
+
+    public ManageRightsAndUpdgradesControl(FriendlyByteBuf buf) {
+        super(id);
+        if (buf.readBoolean()) {
+            itemStack = buf.readItem();
+        } else {
+            itemStack = null;
+            friendRights = buf.readInt();
+            otherRights = buf.readInt();
+        }
+    }
+
+    @Override
+    public void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes,
+                           CustomPayloadEvent.Context context,
+                           Function<Integer, Boolean> permissionChecker) throws MissingPermissionException {
+        ServerPlayer player = (ServerPlayer) context.getSender();
+
+        if (itemStack == null) {
+            checkPerms(ScreenRights.MANAGE, permissionChecker, player);
+            tes.setRights((ServerPlayer) context.getSender(), side, friendRights, otherRights);
+        } else {
+            checkPerms(ScreenRights.MANAGE_UPGRADES, permissionChecker, player);
+            if (!(itemStack.getItem() instanceof IUpgrade)) return;
+            tes.removeUpgrade(side, itemStack, player);
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, CustomPayloadEvent.Context context) {
+        // Client-side handling (if needed)
+    }
 }

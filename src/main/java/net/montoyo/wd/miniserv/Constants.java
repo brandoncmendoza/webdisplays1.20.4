@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.miniserv;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 public abstract class Constants {
 

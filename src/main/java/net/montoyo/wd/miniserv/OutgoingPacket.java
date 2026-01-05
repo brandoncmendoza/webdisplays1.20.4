@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.miniserv;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.io.*;
 import java.util.function.Consumer;

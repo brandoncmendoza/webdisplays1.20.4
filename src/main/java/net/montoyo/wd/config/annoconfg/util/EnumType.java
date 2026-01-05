@@ -1,4 +1,6 @@
 package net.montoyo.wd.config.annoconfg.util;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 public enum EnumType {
 	BYTE(byte.class),

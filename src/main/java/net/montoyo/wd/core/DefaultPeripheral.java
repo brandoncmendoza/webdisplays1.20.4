@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.core;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.Block;

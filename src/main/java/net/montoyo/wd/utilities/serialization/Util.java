@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.utilities.serialization;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -85,7 +87,7 @@ public abstract class Util {
 
             return Arrays.copyOf(ray, ray.length, cls);
         } else if (cls == ResourceLocation.class) {
-            return new ResourceLocation(bb.readUtf());
+            return ResourceLocation.parse(bb.readUtf());
         } else if (!cls.isPrimitive()) {
             Object ret;
             Field[] fields = cls.getFields();

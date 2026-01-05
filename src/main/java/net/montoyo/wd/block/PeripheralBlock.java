@@ -3,6 +3,12 @@
  */
 
 package net.montoyo.wd.block;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.server.level.ServerLevel;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,16 +38,19 @@ import net.montoyo.wd.entity.AbstractInterfaceBlockEntity;
 import net.montoyo.wd.entity.AbstractPeripheralBlockEntity;
 import net.montoyo.wd.entity.ServerBlockEntity;
 import net.montoyo.wd.item.ItemLinker;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.client_bound.S2CMessageCloseGui;
 import net.montoyo.wd.utilities.Log;
 import org.jetbrains.annotations.Nullable;
 
 public class PeripheralBlock extends WDContainerBlock {
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        throw new UnsupportedOperationException("PeripheralBlock does not support codec serialization");
+    }
     DefaultPeripheral type;
 
     public PeripheralBlock(DefaultPeripheral type) {
-        super(BlockBehaviour.Properties.copy(Blocks.STONE).strength(1.5f, 10.f));
+        super(BlockBehaviour.Properties.of().strength(1.5f, 10.f));
         this.type = type;
     }
 
@@ -120,7 +129,7 @@ public class PeripheralBlock extends WDContainerBlock {
     @Override
     public void playerDestroy(Level world, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack tool) {
         if (!world.isClientSide) {
-            WDNetworkRegistry.INSTANCE.send(PacketDistributor.NEAR.with(() -> point(world, pos)), new S2CMessageCloseGui(pos));
+            PacketSender.sendToNear(new S2CMessageCloseGui(pos), (ServerLevel)world, pos, 64.0);
         }
         super.playerDestroy(world, player, pos, state, blockEntity, tool);
     }

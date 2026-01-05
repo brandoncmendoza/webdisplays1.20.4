@@ -1,0 +1,112 @@
+/*
+import java.util.Collection;
+import java.util.Collection;
+ * Copyright (C) 2018 BARBOTIN Nicolas
+ */
+package net.montoyo.wd.net.server_bound;
+import net.minecraft.server.players.GameProfileCache;
+import java.util.Collection;
+import net.minecraft.server.MinecraftServer;
+import java.util.Collection;
+
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import java.util.Collection;
+import net.minecraftforge.api.distmarker.Dist;
+import java.util.Collection;
+import net.montoyo.wd.client.ClientProxy;
+import java.util.Collection;
+
+
+import com.mojang.authlib.GameProfile;
+import java.util.Collection;
+import net.minecraft.network.FriendlyByteBuf;
+import java.util.Collection;
+import net.minecraft.resources.ResourceLocation;
+import java.util.Collection;
+import net.minecraft.server.level.ServerPlayer;
+import java.util.Collection;
+import net.minecraftforge.event.network.CustomPayloadEvent;
+import java.util.Collection;
+import net.montoyo.wd.WebDisplays;
+import java.util.Collection;
+import net.montoyo.wd.net.Packet;
+import java.util.Collection;
+import net.montoyo.wd.net.PacketSender;
+import java.util.Collection;
+import net.montoyo.wd.net.client_bound.S2CMessageACResult;
+import java.util.Collection;
+import net.montoyo.wd.utilities.serialization.NameUUIDPair;
+import java.util.Collection;
+
+import java.util.Arrays;
+import java.util.Collection;
+
+public class C2SMessageACQuery implements Packet, Runnable {
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("webdisplays", "ac_query");
+    
+    private ServerPlayer player;
+    private final String beginning;
+    private final boolean matchExact;
+
+    public C2SMessageACQuery(String beg, boolean exact) {
+        beginning = beg;
+        matchExact = exact;
+    }
+
+    public C2SMessageACQuery(FriendlyByteBuf buf) {
+        beginning = buf.readUtf();
+        matchExact = buf.readBoolean();
+    }
+
+    @Override
+    public ResourceLocation id() {
+        return ID;
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        buf.writeUtf(beginning);
+        buf.writeBoolean(matchExact);
+    }
+
+    @Override
+    public void run() {
+if (FMLEnvironment.dist == Dist.CLIENT) { GameProfile[] profiles = ((ClientProxy) WebDisplays.PROXY).getOnlineGameProfiles(); }
+        NameUUIDPair[] result;
+        
+        if (matchExact) {
+        GameProfileCache cache = ((MinecraftServer) ctx.get().getSender().getServer()).getProfileCache();
+        List<ServerPlayer> players = ctx.get().getSender().getServer().getPlayerList().getPlayers();
+            result = Arrays.stream(profiles)
+                    .filter(gp -> gp.getName().equalsIgnoreCase(beginning))
+                    .map(NameUUIDPair::new)
+                    .toArray(NameUUIDPair[]::new);
+        } else {
+            final String lBeg = beginning.toLowerCase();
+        GameProfileCache cache = ((MinecraftServer) ctx.get().getSender().getServer()).getProfileCache();
+        List<ServerPlayer> players = ctx.get().getSender().getServer().getPlayerList().getPlayers();
+            result = Arrays.stream(profiles)
+                    .filter(gp -> gp.getName().toLowerCase().startsWith(lBeg))
+                    .map(NameUUIDPair::new)
+                    .toArray(NameUUIDPair[]::new);
+        }
+        
+        if (player != null) {
+            String[] names = java.util.Arrays.stream(result).map(p -> p.name).toArray(String[]::new); PacketSender.sendToPlayer(new S2CMessageACResult("", names), player);
+        }
+    }
+
+    @Override
+    public void handle(CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> {
+            if (context.isServerSide()) {
+                player = (ServerPlayer) context.getSender();
+                if (player != null) {
+                    // Ejecutar en un thread separado para no bloquear el servidor
+                    new Thread(this, "AC-Query-" + player.getName().getString()).start();
+                }
+            }
+        });
+        context.setPacketHandled(true);
+    }
+}

@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.utilities.math;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;

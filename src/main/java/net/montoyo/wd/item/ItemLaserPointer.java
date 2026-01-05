@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.item;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -18,7 +21,6 @@ import net.montoyo.wd.controls.builtin.ClickControl;
 import net.montoyo.wd.core.DefaultUpgrade;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.entity.ScreenData;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.server_bound.C2SMessageScreenCtrl;
 import net.montoyo.wd.registry.BlockRegistry;
 import net.montoyo.wd.utilities.Multiblock;
@@ -89,7 +91,7 @@ public class ItemLaserPointer extends Item implements WDItem {
 			
 			if (t - lastPointPacket >= 100) {
 				lastPointPacket = t;
-				WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
+				PacketSender.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
 			}
 		} else {
 			deselectScreen();
@@ -133,9 +135,9 @@ public class ItemLaserPointer extends Item implements WDItem {
 				te.handleMouseEvent(side, press ? ClickControl.ControlType.DOWN : ClickControl.ControlType.UP, hit, finalButton);
 
 				if (press)
-					WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserDown(te, side, hit, finalButton));
+					PacketSender.sendToServer(C2SMessageScreenCtrl.laserDown(te, side, hit, finalButton));
 				else
-					WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserUp(te, side, finalButton));
+					PacketSender.sendToServer(C2SMessageScreenCtrl.laserUp(te, side, finalButton));
 			});
 		}
 	}

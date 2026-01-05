@@ -3,9 +3,10 @@ package net.montoyo.wd.controls.builtin;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.montoyo.wd.controls.ScreenControl;
 import net.montoyo.wd.core.MissingPermissionException;
 import net.montoyo.wd.core.ScreenRights;
@@ -17,58 +18,63 @@ import net.montoyo.wd.utilities.math.Vector2i;
 import java.util.function.Function;
 
 public class ScreenModifyControl extends ScreenControl {
-	public static final ResourceLocation id = new ResourceLocation("webdisplays:mod_screen");
-	
-	public enum ControlType {
-		RESOLUTION, ROTATION
-	}
-	
-	ControlType type;
-	Vector2i res;
-	Rotation rotation;
-	
-	public ScreenModifyControl(Vector2i res) {
-		super(id);
-		this.type = ControlType.RESOLUTION;
-		this.res = res;
-	}
-	
-	public ScreenModifyControl(Rotation rotation) {
-		super(id);
-		this.type = ControlType.ROTATION;
-		this.rotation = rotation;
-	}
-	
-	public ScreenModifyControl(FriendlyByteBuf buf) {
-		super(id);
-		type = ControlType.values()[buf.readByte()];
-		if (type.equals(ControlType.RESOLUTION))
-			res = new Vector2i(buf);
-		else rotation = Rotation.values()[buf.readByte()];
-	}
-	
-	@Override
-	public void write(FriendlyByteBuf buf) {
-		buf.writeByte(type.ordinal());
-		if (res != null) res.writeTo(buf);
-		else if (rotation != null) buf.writeByte(rotation.ordinal());
-	}
-	
-	@Override
-	public void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx, Function<Integer, Boolean> permissionChecker) throws MissingPermissionException {
-		checkPerms(ScreenRights.MODIFY_SCREEN, permissionChecker, ctx.getSender());
-		switch (type) {
-			case RESOLUTION -> tes.setResolution(side, res);
-			case ROTATION -> tes.setRotation(side, rotation);
-		}
-	}
-	
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, NetworkEvent.Context ctx) {
-		switch (type) {
-			case RESOLUTION -> tes.setResolution(side, res);
-			case ROTATION -> tes.setRotation(side, rotation);
-		}
-	}
+    public static final ResourceLocation id = ResourceLocation.tryParse("webdisplays:mod_screen");
+
+    private Vector2i resolution;
+    private Rotation rotation;
+
+    public ScreenModifyControl() {
+        super(id);
+    }
+
+    public ScreenModifyControl(Vector2i res) {
+        super(id);
+        resolution = res;
+        rotation = null;
+    }
+
+    public ScreenModifyControl(Rotation rot) {
+        super(id);
+        rotation = rot;
+        resolution = null;
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buf) {
+        if (resolution == null) {
+            buf.writeBoolean(true);
+            buf.writeByte(rotation.ordinal());
+        } else {
+            buf.writeBoolean(false);
+            resolution.writeTo(buf);
+        }
+    }
+
+    public ScreenModifyControl(FriendlyByteBuf buf) {
+        super(id);
+        if (buf.readBoolean()) {
+            rotation = Rotation.values()[buf.readByte()];
+            resolution = null;
+        } else {
+            resolution = new Vector2i(buf);
+            rotation = null;
+        }
+    }
+
+    @Override
+    public void handleServer(BlockPos pos, BlockSide side, ScreenBlockEntity tes,
+                           CustomPayloadEvent.Context context,
+                           Function<Integer, Boolean> permissionChecker) throws MissingPermissionException {
+        checkPerms(ScreenRights.CHANGE_URL, permissionChecker, (ServerPlayer) context.getSender());
+        if (resolution == null)
+            tes.setRotation(side, rotation);
+        else
+            tes.setResolution(side, resolution);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @Override
+    public void handleClient(BlockPos pos, BlockSide side, ScreenBlockEntity tes, CustomPayloadEvent.Context context) {
+        // Client-side handling (if needed)
+    }
 }

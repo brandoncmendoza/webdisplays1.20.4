@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.client.gui;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -17,7 +20,6 @@ import net.montoyo.wd.client.gui.controls.TextField;
 import net.montoyo.wd.client.gui.loading.FillControl;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.item.ItemMinePad2;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.server_bound.C2SMessageMinepadUrl;
 import net.montoyo.wd.net.server_bound.C2SMessageScreenCtrl;
 import net.montoyo.wd.utilities.data.BlockSide;
@@ -74,7 +76,7 @@ public class GuiSetURL2 extends WDScreen {
 	@Override
 	public void init() {
 		super.init();
-		loadFrom(new ResourceLocation("webdisplays", "gui/seturl.json"));
+		loadFrom(ResourceLocation.fromNamespaceAndPath("webdisplays", "gui/seturl.json"));
 		tfURL.setText(screenURL);
 	}
 	
@@ -100,9 +102,9 @@ public class GuiSetURL2 extends WDScreen {
 			validate(tfURL.getText());
 		else if (ev.getSource() == btnShutDown) {
 			if (isPad) {
-				WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(
-						getUUID(),
-						""
+                                PacketSender.sendToServer(new C2SMessageMinepadUrl(
+                                                getUUID(),
+                                                ""
 				));
 				stack.getTag().remove("PadID");
 			}
@@ -130,7 +132,7 @@ public class GuiSetURL2 extends WDScreen {
 			
 			if (isPad) {
 				UUID uuid = getUUID();
-				WDNetworkRegistry.INSTANCE.sendToServer(new C2SMessageMinepadUrl(uuid, url));
+				PacketSender.sendToServer(new C2SMessageMinepadUrl(uuid, url));
 				stack.getTag().putString("PadURL", url);
 				
 				ClientProxy.PadData pd = ((ClientProxy) WebDisplays.PROXY).getPadByID(uuid);
@@ -139,7 +141,7 @@ public class GuiSetURL2 extends WDScreen {
 					pd.view.loadURL(WebDisplays.applyBlacklist(url));
 				}
 			} else
-				WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.setURL(tileEntity, screenSide, url, remoteLocation));
+				PacketSender.sendToServer(C2SMessageScreenCtrl.setURL(tileEntity, screenSide, url, remoteLocation));
 		}
 		
 		minecraft.setScreen(null);

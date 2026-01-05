@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.utilities;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

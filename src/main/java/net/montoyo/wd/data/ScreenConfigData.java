@@ -3,9 +3,14 @@
  */
 
 package net.montoyo.wd.data;
+import net.minecraft.server.level.ServerLevel;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -16,7 +21,6 @@ import net.montoyo.wd.client.gui.GuiScreenConfig;
 import net.montoyo.wd.entity.ScreenData;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.net.BufferUtils;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.client_bound.S2CMessageOpenGui;
 import net.montoyo.wd.utilities.data.BlockSide;
 import net.montoyo.wd.utilities.Log;
@@ -81,9 +85,9 @@ public class ScreenConfigData extends GuiData {
 		return this;
 	}
 	
-	public void sendTo(PacketDistributor.TargetPoint tp) {
-		WDNetworkRegistry.INSTANCE.send(PacketDistributor.NEAR.with(() -> tp), new S2CMessageOpenGui(this));
-	}
+    public void sendTo(ServerLevel level, BlockPos blockPos) {
+        PacketSender.sendToNear(new S2CMessageOpenGui(this), level, blockPos, 64.0);
+    }
 	
 	@Override
 	public void serialize(FriendlyByteBuf buf) {

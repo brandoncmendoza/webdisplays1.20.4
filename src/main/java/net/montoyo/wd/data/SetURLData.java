@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.data;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;

@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.miniserv.server;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.utilities.Log;
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Server implements Runnable {
+    public byte[] getKey() { return new byte[0]; }
 
     private static Server instance;
 

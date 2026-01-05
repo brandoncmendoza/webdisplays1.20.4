@@ -1,45 +1,46 @@
-/*
- * Copyright (C) 2019 BARBOTIN Nicolas
- */
-
 package net.montoyo.wd.net.client_bound;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.montoyo.wd.client.ClientProxy;
+
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.data.GuiData;
-import net.montoyo.wd.net.Packet;
 import net.montoyo.wd.utilities.Log;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.api.distmarker.Dist;
 
-public class S2CMessageOpenGui extends Packet {
-	private GuiData data;
-	
-	public S2CMessageOpenGui(GuiData data) {
-		this.data = data;
-	}
-	
-	public S2CMessageOpenGui(FriendlyByteBuf buf) {
-		super(buf);
-		
-		String name = buf.readUtf();
-		data = GuiData.read(name, buf);
-		Class<? extends GuiData> cls = GuiData.classOf(name);
-		
-		if (cls == null) {
-			Log.error("Could not create GuiData of type %s because it doesn't exist!", name);
-		}
-	}
-	
-	@Override
-	public void write(FriendlyByteBuf buf) {
-		buf.writeUtf(data.getName());
-		data.serialize(buf);
-	}
-	
-	public void handle(NetworkEvent.Context context) {
-		if (checkClient(context)) {
-			context.enqueueWork(() -> WebDisplays.PROXY.displayGui(data));
-			context.setPacketHandled(true);
-		}
-	}
+public class S2CMessageOpenGui {
+    private GuiData guiData;
+
+    public S2CMessageOpenGui(GuiData data) {
+        this.guiData = data;
+    }
+
+    public S2CMessageOpenGui(FriendlyByteBuf buf) {
+        String className = buf.readUtf();
+        try {
+            guiData = (GuiData) Class.forName(className).getDeclaredConstructor().newInstance();
+            guiData.deserialize(buf);
+        } catch (Exception e) {
+            Log.error("Critical error deserializing GuiData: %s", className);
+            e.printStackTrace();
+        }
+    }
+
+    public void write(FriendlyByteBuf buf) {
+        buf.writeUtf(guiData.getClass().getName());
+        guiData.serialize(buf);
+    }
+
+    public static void handle(S2CMessageOpenGui msg, CustomPayloadEvent.Context context) {
+        context.enqueueWork(() -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                if (FMLEnvironment.dist == Dist.CLIENT) ((ClientProxy) WebDisplays.PROXY).displayGui(msg.guiData);
+            }
+        });
+        context.setPacketHandled(true);
+    }
 }

@@ -4,6 +4,10 @@
 
 package net.montoyo.wd.block;
 
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -54,8 +58,12 @@ public class ScreenBlock extends BaseEntityBlock {
     }
 
     @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return simpleCodec(ScreenBlock::new);
+    }
+
+    @Override
     public void onRemove(BlockState p_60515_, Level p_60516_, BlockPos p_60517_, BlockState p_60518_, boolean p_60519_) {
-        // TODO: make this also get called on client?
         if (p_60518_.getBlock() == p_60515_.getBlock()) return;
 
         for (BlockSide value : BlockSide.values()) {
@@ -78,23 +86,22 @@ public class ScreenBlock extends BaseEntityBlock {
     public InteractionResult use(BlockState state, Level world, BlockPos position, Player player, InteractionHand hand, BlockHitResult hit) {
         ItemStack heldItem = player.getItemInHand(hand);
         boolean isUpgrade = false;
+        
         if (heldItem.isEmpty())
-            heldItem = null; //Easier to work with
+            heldItem = null;
         else if (!(isUpgrade = heldItem.getItem() instanceof IUpgrade))
-            return InteractionResult.FAIL;
+            return InteractionResult.CONSUME;
         else if (heldItem.getItem() instanceof ItemLaserPointer)
-            return InteractionResult.FAIL; // laser pointer already handles stuff
+            return InteractionResult.CONSUME;
 
-        // handling the off hand leads to double clicking
         if (!isUpgrade && hand == InteractionHand.OFF_HAND)
-            return InteractionResult.FAIL;
+            return InteractionResult.CONSUME;
 
         if (world.isClientSide)
-            return InteractionResult.FAIL;
+            return InteractionResult.CONSUME;
 
         boolean sneaking = player.isShiftKeyDown();
         Vector3i pos = new Vector3i(position);
-
         BlockSide side = BlockSide.values()[hit.getDirection().ordinal()];
 
         Multiblock.findOrigin(world, pos, side, null);
@@ -103,7 +110,7 @@ public class ScreenBlock extends BaseEntityBlock {
         if (te != null && te.getScreen(side) != null) {
             ScreenData scr = te.getScreen(side);
 
-            if (sneaking) { //Right Click
+            if (sneaking) {
                 if ((scr.rightsFor(player) & ScreenRights.CHANGE_URL) == 0)
                     Util.toast(player, "restrictions");
                 else
@@ -122,8 +129,7 @@ public class ScreenBlock extends BaseEntityBlock {
                             heldItem.shrink(1);
 
                         Util.toast(player, ChatFormatting.AQUA, "upgradeOk");
-                        if (player instanceof ServerPlayer)
-                            WebDisplays.INSTANCE.criterionUpgradeScreen.trigger(((ServerPlayer) player).getAdvancements());
+                        // TODO: Fix criterion trigger
                     } else
                         Util.toast(player, "upgradeError");
 
@@ -136,7 +142,6 @@ public class ScreenBlock extends BaseEntityBlock {
                 }
 
                 Vector2i tmp = new Vector2i();
-
                 float hitX = ((float) hit.getLocation().x) - (float) te.getBlockPos().getX();
                 float hitY = ((float) hit.getLocation().y) - (float) te.getBlockPos().getY();
                 float hitZ = ((float) hit.getLocation().z) - (float) te.getBlockPos().getZ();
@@ -146,10 +151,6 @@ public class ScreenBlock extends BaseEntityBlock {
                 return InteractionResult.CONSUME;
             }
         }
-//        else if(sneaking) {
-//            Util.toast(player, "turnOn");
-//            return InteractionResult.SUCCESS;
-//        }
 
         Vector2i size = Multiblock.measure(world, pos, side);
         if (size.x < 2 && size.y < 2) {
@@ -168,48 +169,39 @@ public class ScreenBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
 
-        boolean created = false;
-        Log.info("Player %s (UUID %s) created a screen at %s of size %dx%d", player.getName(), player.getGameProfile().getId().toString(), pos.toString(), size.x, size.y);
+        Log.info("Player %s created a screen at %s size %dx%d", player.getName().getString(), pos.toString(), size.x, size.y);
 
         if (te == null) {
             BlockPos bp = pos.toBlock();
             world.setBlockAndUpdate(bp, world.getBlockState(bp).setValue(hasTE, true));
             te = (ScreenBlockEntity) world.getBlockEntity(bp);
-            created = true;
         }
 
-        te.addScreen(side, size, null, player, true);
+        if (te != null)
+            te.addScreen(side, size, null, player, true);
+            
         return InteractionResult.SUCCESS;
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos source,
-                                boolean isMoving) {
+    public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos source, boolean isMoving) {
         if (block != this && !world.isClientSide && !state.getValue(emitting)) {
             for (BlockSide side : BlockSide.values()) {
                 Vector3i vec = new Vector3i(pos);
                 Multiblock.findOrigin(world, vec, side, null);
-
                 ScreenBlockEntity tes = (ScreenBlockEntity) world.getBlockEntity(vec.toBlock());
                 if (tes != null && tes.hasUpgrade(side, DefaultUpgrade.REDINPUT)) {
-                    Direction facing = Direction.from2DDataValue(side.reverse().ordinal()); //Opposite face
-                    vec.sub(pos.getX(), pos.getY(), pos.getZ()).neg();
-//                    tes.updateJSRedstone(side, new Vector2i(vec.dot(side.right), vec.dot(side.up)), world.getSignal(pos, facing));
+                    // Logic for redstone update
                 }
             }
         }
     }
     
     public static boolean hit2pixels(BlockSide side, BlockPos bpos, Vector3i pos, ScreenData scr, float hitX, float hitY, float hitZ, Vector2i dst) {
-        if(side.right.x < 0)
-            hitX -= 1.f;
-
-        if(side.right.z < 0 || side == BlockSide.TOP || side == BlockSide.BOTTOM)
-            hitZ -= 1.f;
+        if(side.right.x < 0) hitX -= 1.f;
+        if(side.right.z < 0 || side == BlockSide.TOP || side == BlockSide.BOTTOM) hitZ -= 1.f;
 
         Vector3f rel = new Vector3f(hitX, hitY, hitZ);
-
-        // this dot is acting as a "get distance from plane" where the plane is the edge of the screen
         float cx = rel.dot(side.right.toFloat()) - 2.f / 16.f;
         float cy = rel.dot(side.up.toFloat()) - 2.f / 16.f;
         float sw = ((float) scr.size.x) - 4.f / 16.f;
@@ -219,102 +211,64 @@ public class ScreenBlock extends BaseEntityBlock {
         cy /= sh;
 
         if (cx >= 0.f && cx <= 1.0 && cy >= 0.f && cy <= 1.f) {
-            if (side != BlockSide.BOTTOM)
-                cy = 1.f - cy;
-
+            if (side != BlockSide.BOTTOM) cy = 1.f - cy;
             switch (scr.rotation) {
-                case ROT_90:
-                    cy = 1.0f - cy;
-                    break;
-
-                case ROT_180:
-                    cx = 1.0f - cx;
-                    cy = 1.0f - cy;
-                    break;
-
-                case ROT_270:
-                    cx = 1.0f - cx;
-                    break;
+                case ROT_90: cy = 1.0f - cy; break;
+                case ROT_180: cx = 1.0f - cx; cy = 1.0f - cy; break;
+                case ROT_270: cx = 1.0f - cx; break;
             }
-
             cx *= (float) scr.resolution.x;
             cy *= (float) scr.resolution.y;
-
             if (scr.rotation.isVertical) {
-                dst.x = (int) cy;
-                dst.y = (int) cx;
+                dst.x = (int) cy; dst.y = (int) cx;
             } else {
-                dst.x = (int) cx;
-                dst.y = (int) cy;
+                dst.x = (int) cx; dst.y = (int) cy;
             }
-
             return true;
         }
-
         return false;
     }
-
-    /************************************************* DESTRUCTION HANDLING *************************************************/
 
     private void onDestroy(Level world, BlockPos pos, Player ply) {
         if (!world.isClientSide) {
             Vector3i bp = new Vector3i(pos);
             Multiblock.BlockOverride override = new Multiblock.BlockOverride(bp, Multiblock.OverrideAction.SIMULATE);
-
             for (BlockSide bs : BlockSide.values())
                 destroySide(world, bp.clone(), bs, override, ply);
         }
     }
 
-    private void destroySide(Level world, Vector3i pos, BlockSide side, Multiblock.BlockOverride override, Player
-            source) {
+    private void destroySide(Level world, Vector3i pos, BlockSide side, Multiblock.BlockOverride override, Player source) {
         Multiblock.findOrigin(world, pos, side, override);
         BlockPos bp = pos.toBlock();
         BlockEntity te = world.getBlockEntity(bp);
-
         if (te instanceof ScreenBlockEntity) {
             ((ScreenBlockEntity) te).onDestroy(source);
-            world.setBlock(bp, world.getBlockState(bp).setValue(hasTE, false), Block.UPDATE_ALL_IMMEDIATE); //Destroy tile entity.
+            world.setBlock(bp, world.getBlockState(bp).setValue(hasTE, false), Block.UPDATE_ALL_IMMEDIATE);
         }
     }
 
     @Override
-    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player,
-                                       boolean willHarvest, FluidState fluid) {
+    public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
         onDestroy(level, pos, player);
         return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
     }
 
     @Override
-    public void setPlacedBy(Level world, @NotNull BlockPos pos, @NotNull BlockState
-            state, @org.jetbrains.annotations.Nullable LivingEntity whoDidThisShit, @NotNull ItemStack stack) {
-        if (world.isClientSide)
-            return;
-
+    public void setPlacedBy(Level world, @NotNull BlockPos pos, @NotNull BlockState state, LivingEntity who, @NotNull ItemStack stack) {
+        if (world.isClientSide) return;
         Multiblock.BlockOverride override = new Multiblock.BlockOverride(new Vector3i(pos), Multiblock.OverrideAction.IGNORE);
-        Vector3i[] neighbors = new Vector3i[6];
-
-        neighbors[0] = new Vector3i(pos.getX() + 1, pos.getY(), pos.getZ());
-        neighbors[1] = new Vector3i(pos.getX() - 1, pos.getY(), pos.getZ());
-        neighbors[2] = new Vector3i(pos.getX(), pos.getY() + 1, pos.getZ());
-        neighbors[3] = new Vector3i(pos.getX(), pos.getY() - 1, pos.getZ());
-        neighbors[4] = new Vector3i(pos.getX(), pos.getY(), pos.getZ() + 1);
-        neighbors[5] = new Vector3i(pos.getX(), pos.getY(), pos.getZ() - 1);
-
-        for (Vector3i neighbor : neighbors) {
-            if (world.getBlockState(neighbor.toBlock()).getBlock() instanceof ScreenBlock) {
+        for (Direction dir : Direction.values()) {
+            BlockPos nPos = pos.relative(dir);
+            if (world.getBlockState(nPos).getBlock() instanceof ScreenBlock) {
                 for (BlockSide bs : BlockSide.values())
-                    destroySide(world, neighbor.clone(), bs, override, (whoDidThisShit instanceof Player) ? ((Player) whoDidThisShit) : null);
+                    destroySide(world, new Vector3i(nPos), bs, override, (who instanceof Player) ? ((Player) who) : null);
             }
         }
     }
 
-    /************************************************* STUFF THAT'S UNLIKELY TO BE TOUCHED BUT NEEDS TO BE HERE *************************************************/
-
     @Override
-    public @NotNull PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.IGNORE;
-    }
+    public @NotNull PushReaction getPistonPushReaction(BlockState state) { return PushReaction.IGNORE; }
 
     @Override
     public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
@@ -322,9 +276,7 @@ public class ScreenBlock extends BaseEntityBlock {
     }
 
     @Override
-    public boolean isSignalSource(BlockState state) {
-        return state.getValue(emitting);
-    }
+    public boolean isSignalSource(BlockState state) { return state.getValue(emitting); }
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
@@ -332,12 +284,53 @@ public class ScreenBlock extends BaseEntityBlock {
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
-    }
+    public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(properties);
+    }
+
+    /**
+     * Define la hitbox del bloque - permite apilamiento
+     */
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        return Shapes.box(0.0, 0.0, 0.0, 1.0, 1.0, 0.0625);
+    }
+
+    /**
+     * Colisión - sin colisión para poder atravesar
+     */
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        return Shapes.empty();
+    }
+
+    /**
+     * Permite colocar el bloque en cualquier lugar
+     */
+    @Override
+    public boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader world, BlockPos pos) {
+        return true;
+    }
+
+    /**
+     * Define el estado cuando se coloca
+     */
+    @Override
+    public BlockState getStateForPlacement(net.minecraft.world.item.context.BlockPlaceContext context) {
+        return this.defaultBlockState();
+    }
+
+    /**
+     * Indica que NO es reemplazable si tiene pantalla
+     */
+    @Override
+    public boolean canBeReplaced(BlockState state, net.minecraft.world.item.context.BlockPlaceContext context) {
+        if (state.getValue(hasTE)) {
+            return false;
+        }
+        return true;
     }
 }

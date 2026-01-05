@@ -8,16 +8,13 @@
   "key": {
     "K": {
       "item": "webdisplays:craftcomp_stonekey",
-      "data": 0
     },
     "P": {
       "item": "webdisplays:craftcomp_peripheral",
-      "data": 2
     }
   },
   "result": {
     "item": "webdisplays:keyboard",
-    "data": 0,
     "count": 1
   }
 }

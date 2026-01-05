@@ -3,6 +3,8 @@
  */
 
 package net.montoyo.wd.utilities.math;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 public final class Vector3f {
     public float x;

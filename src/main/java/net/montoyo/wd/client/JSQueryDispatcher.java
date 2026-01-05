@@ -16,7 +16,6 @@
 //import net.montoyo.wd.core.IUpgrade;
 //import net.montoyo.wd.core.JSServerRequest;
 //import net.montoyo.wd.entity.TileEntityScreen;
-//import net.montoyo.wd.net.WDNetworkRegistry;
 //import net.montoyo.wd.net.server_bound.C2SMessageScreenCtrl;
 //import net.montoyo.wd.utilities.*;
 //
@@ -212,7 +211,7 @@
 //        ServerQuery ret = new ServerQuery(tes, side, cb);
 //        serverQueries.add(ret);
 //
-//        WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.jsRequest(tes, side, ret.id, type, data));
+//        PacketSender.sendToServer(C2SMessageScreenCtrl.jsRequest(tes, side, ret.id, type, data));
 //    }
 //
 //    private void registerDefaults() {

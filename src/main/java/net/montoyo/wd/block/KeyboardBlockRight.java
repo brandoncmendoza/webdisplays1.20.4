@@ -3,6 +3,7 @@
  */
 
 package net.montoyo.wd.block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -39,7 +40,7 @@ public class KeyboardBlockRight extends Block implements IPeripheral {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public KeyboardBlockRight() {
-        super(Properties.copy(Blocks.STONE)
+        super(BlockBehaviour.Properties.of()
                 .strength(1.5f, 10.f));
     }
     
@@ -55,7 +56,7 @@ public class KeyboardBlockRight extends Block implements IPeripheral {
         removeLeftPiece(state, world, pos);
         if (setState)
             world.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-        WDNetworkRegistry.INSTANCE.send(PacketDistributor.NEAR.with(() -> point(world, pos)), new S2CMessageCloseGui(pos));
+        //         WDNetworkRegistry.INSTANCE.send(PacketDistributor.NEAR.with(point(world, pos)), new S2CMessageCloseGui(pos));
     }
     
     @Override

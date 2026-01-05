@@ -60,6 +60,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.montoyo.wd.SharedProxy;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.block.ScreenBlock;
@@ -241,6 +242,22 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	
 	/**************************************** INHERITED METHODS ****************************************/
 	@SubscribeEvent
+
+    public static void onCommonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            try {
+                Log.info("Inicializando MCEF...");
+                MCEF.initialize();
+                for (int attempt = 0; attempt < 50 && !MCEF.isInitialized(); attempt++) {
+                    Thread.sleep(100);
+                }
+                Log.info(MCEF.isInitialized() ? "MCEF OK" : "MCEF TIMEOUT");
+            } catch (Exception e) {
+                Log.error("Error MCEF: " + e.getMessage());
+            }
+        });
+    }
+
 	public static void onClientSetup(FMLClientSetupEvent event) {
 		BlockEntityRenderers.register(TileRegistry.SCREEN_BLOCK_ENTITY.get(), new ScreenRenderer.ScreenRendererProvider());
 	}
@@ -250,17 +267,27 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		event.register(ScreenModelLoader.SCREEN_LOADER.getPath(), new ScreenModelLoader());
 	}
 	
-	public void preInit() {
-		super.preInit();
-		mc = Minecraft.getInstance();
-		MinecraftForge.EVENT_BUS.register(this);
-	}
+    @Override
+    public void preInit() {
+        super.preInit();
+        mc = Minecraft.getInstance();
+        MinecraftForge.EVENT_BUS.register(this);
+        Minecraft.getInstance().submit(() -> {
+            for (int j = 0; j < 100; j++) {
+                if (MCEF.isInitialized() && MCEF.getClient() != null) {
+                    onCefInit();
+                    return;
+                }
+                try { Thread.sleep(100); } catch (Exception e) {}
+            }
+        });
+    }
 	
 	public void onCefInit() {
 		minePadRenderer = new MinePadRenderer();
 		laserPointerRenderer = new LaserPointerRenderer();
 
-		if (!MCEF.isInitialized()) return;
+        if (!MCEF.isInitialized() || MCEF.getClient() == null) return;
 
 		MCEF.getApp().getHandle().registerSchemeHandlerFactory(
 				"webdisplays", "",
@@ -319,7 +346,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 			screenTracking.remove(idx);
 	}
 	
-	public void onAutocompleteResult(String[] pairs) {
+	public void onAutocompleteResult(NameUUIDPair[] pairs) {
 		if (mc.screen != null && mc.screen instanceof WDScreen screen) {
 			if (pairs.length == 0)
 				(screen).onAutocompleteFailure();

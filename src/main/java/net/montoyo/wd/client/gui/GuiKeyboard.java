@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.client.gui;
+import net.montoyo.wd.net.PacketSender;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.cinemamod.mcef.MCEFBrowser;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -28,7 +31,6 @@ import net.montoyo.wd.client.gui.loading.FillControl;
 import net.montoyo.wd.controls.builtin.ClickControl;
 import net.montoyo.wd.entity.ScreenBlockEntity;
 import net.montoyo.wd.entity.ScreenData;
-import net.montoyo.wd.net.WDNetworkRegistry;
 import net.montoyo.wd.net.server_bound.C2SMessageScreenCtrl;
 import net.montoyo.wd.utilities.Log;
 import net.montoyo.wd.utilities.data.BlockSide;
@@ -116,7 +118,7 @@ public class GuiKeyboard extends WDScreen {
         else
             showWarning = !hasUserReadWarning();
 
-        loadFrom(new ResourceLocation("webdisplays", "gui/kb_right.json"));
+        loadFrom(ResourceLocation.fromNamespaceAndPath("webdisplays", "gui/kb_right.json"));
 
         if (showWarning) {
             int maxLabelW = 0;
@@ -222,7 +224,7 @@ public class GuiKeyboard extends WDScreen {
     @Override
     protected void sync() {
         if(!evStack.isEmpty()) {
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.type(tes, side, WebDisplays.GSON.toJson(evStack), kbPos));
+            PacketSender.sendToServer(C2SMessageScreenCtrl.type(tes, side, WebDisplays.GSON.toJson(evStack), kbPos));
             evStack.clear();
         }
     }
@@ -324,7 +326,7 @@ public class GuiKeyboard extends WDScreen {
     public void mouseMoved(double mouseX, double mouseY) {
         mouse(mouseX, mouseY, (hit) -> {
             tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, hit, -1);
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
+            PacketSender.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
         });
 
         super.mouseMoved(mouseX, mouseY);
@@ -335,7 +337,7 @@ public class GuiKeyboard extends WDScreen {
         mouse(mouseX, mouseY, (hit) -> {
             tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, hit, -1);
             tes.handleMouseEvent(side, ClickControl.ControlType.DOWN, hit, button);
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserDown(tes, side, hit, button));
+            PacketSender.sendToServer(C2SMessageScreenCtrl.laserDown(tes, side, hit, button));
         });
 
         KeyboardCamera.setMouse(button, true);
@@ -348,7 +350,7 @@ public class GuiKeyboard extends WDScreen {
         mouse(mouseX, mouseY, (hit) -> {
             tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, hit, -1);
             tes.handleMouseEvent(side, ClickControl.ControlType.UP, hit, button);
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserUp(tes, side, button));
+            PacketSender.sendToServer(C2SMessageScreenCtrl.laserUp(tes, side, button));
         });
 
         KeyboardCamera.setMouse(button, false);
@@ -363,7 +365,7 @@ public class GuiKeyboard extends WDScreen {
 
         mouse(mouseX * width, mouseY * height, (hit) -> {
             tes.handleMouseEvent(side, ClickControl.ControlType.MOVE, hit, -1);
-            WDNetworkRegistry.INSTANCE.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
+            PacketSender.sendToServer(C2SMessageScreenCtrl.laserMove(tes, side, hit));
         });
 
         super.tick();
