@@ -3,6 +3,9 @@
  */
 
 package net.montoyo.wd.client;
+import java.util.function.Supplier;
+import net.montoyo.wd.net.compat.NetworkContextCompat;
+import net.minecraftforge.network.PacketDistributor;
 
 import com.cinemamod.mcef.MCEF;
 import com.cinemamod.mcef.MCEFBrowser;
@@ -57,7 +60,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.network.NetworkEvent;
 import net.montoyo.wd.SharedProxy;
 import net.montoyo.wd.WebDisplays;
 import net.montoyo.wd.block.ScreenBlock;
@@ -107,93 +109,77 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		INSTANCE = this;
 	}
 	
-	public static void renderCrosshair(Options options, int screenWidth, int screenHeight, int offset, GuiGraphics poseStack, CallbackInfo ci) {
-		ItemStack stack = Minecraft.getInstance().player.getItemInHand(InteractionHand.MAIN_HAND);
-		ItemStack stack1 = Minecraft.getInstance().player.getItemInHand(InteractionHand.OFF_HAND);
-		
-		if (stack.getItem() instanceof ItemMinePad2) {
-			float sign = 1;
-			if (Minecraft.getInstance().player.getMainArm() == HumanoidArm.LEFT) sign = -1;
-			if (!MinePadRenderer.renderAtSide(sign)) {
-				ci.cancel();
-				return;
-			}
-		} else {
-			if (stack1.getItem() instanceof ItemMinePad2) {
-				float sign = -1;
-				if (Minecraft.getInstance().player.getMainArm() == HumanoidArm.LEFT) sign = 1;
-				if (!MinePadRenderer.renderAtSide(sign)) {
-					ci.cancel();
-					return;
-				}
-			}
-		}
-		
-		if (!(stack.getItem() instanceof ItemLaserPointer ||
-				stack1.getItem() instanceof ItemLaserPointer))
-			return;
-		
-		if (!LaserPointerRenderer.isOn()) {
-			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+	        public static void renderCrosshair(Options options, int screenWidth, int screenHeight, int offset, GuiGraphics poseStack, CallbackInfo ci) {
+                ItemStack stack = Minecraft.getInstance().player.getItemInHand(InteractionHand.MAIN_HAND);
+                ItemStack stack1 = Minecraft.getInstance().player.getItemInHand(InteractionHand.OFF_HAND);
 
-			poseStack.blit(new ResourceLocation(
-					"webdisplays:textures/gui/cursors.png"
-			), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, 240, 240, 15, 15, 256, 256);
-			ci.cancel();
-			return;
-		}
-		
-		Minecraft mc = Minecraft.getInstance();
-		
-		BlockHitResult result = raycast(64.0); //TODO: Make that distance configurable
-		
-		BlockPos bpos = result.getBlockPos();
-		
-		if (result.getType() != HitResult.Type.BLOCK || mc.level.getBlockState(bpos).getBlock() != BlockRegistry.SCREEN_BLOCk.get()) {
-			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+                if (stack.getItem() instanceof ItemMinePad2) {
+                        float sign = 1;
+                        if (Minecraft.getInstance().player.getMainArm() == HumanoidArm.LEFT) sign = -1;
+                        if (!MinePadRenderer.renderAtSide(sign)) {
+                                ci.cancel();
+                                return;
+                        }
+                } else {
+                        if (stack1.getItem() instanceof ItemMinePad2) {
+                                float sign = -1;
+                                if (Minecraft.getInstance().player.getMainArm() == HumanoidArm.LEFT) sign = 1;
+                                if (!MinePadRenderer.renderAtSide(sign)) {
+                                        ci.cancel();
+                                        return;
+                                }
+                        }
+                }
 
-			poseStack.blit(new ResourceLocation(
-					"webdisplays:textures/gui/cursors.png"
-			), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, 240, 240, 15, 15, 256, 256);
-			ci.cancel();
-			return;
-		}
+                if (!(stack.getItem() instanceof ItemLaserPointer || stack1.getItem() instanceof ItemLaserPointer))
+                        return;
 
-		Vector3i pos = new Vector3i(result.getBlockPos());
-		BlockSide side = BlockSide.values()[result.getDirection().ordinal()];
-		
-		Multiblock.findOrigin(mc.level, pos, side, null);
-		ScreenBlockEntity te = (ScreenBlockEntity) mc.level.getBlockEntity(pos.toBlock());
+                if (!LaserPointerRenderer.isOn()) {
+                        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+                        poseStack.blit(new ResourceLocation("webdisplays", "textures/gui/cursors.png"), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, 240, 240, 15, 15, 256, 256);
+                        ci.cancel();
+                        return;
+                }
 
-		ScreenData sc = te.getScreen(side);
-		
-		if (sc == null) return;
+                Minecraft mc = Minecraft.getInstance();
+                BlockHitResult result = raycast(64.0);
+                BlockPos bpos = result.getBlockPos();
 
-		int coordX = sc.mouseType * 15;
-		int coordY = coordX / 255;
-		coordX -= coordY * 255;
-		coordY *= 15;
-		// for some reason, the cursor gets offset at this value
-		if (sc.mouseType >= CefCursorType.NOT_ALLOWED.ordinal()) coordX -= 15;
-		
-		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+                if (result.getType() != HitResult.Type.BLOCK || mc.level.getBlockState(bpos).getBlock() != BlockRegistry.SCREEN_BLOCk.get()) {
+                        RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+                        poseStack.blit(new ResourceLocation("webdisplays", "textures/gui/cursors.png"), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, 240, 240, 15, 15, 256, 256);
+                        ci.cancel();
+                        return;
+                }
 
-		poseStack.blit(new ResourceLocation(
-				"webdisplays:textures/gui/cursors.png"
-		), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, coordX, coordY, 15, 15, 256, 256);
+                Vector3i pos = new Vector3i(result.getBlockPos());
+                BlockSide side = BlockSide.values()[result.getDirection().ordinal()];
+                Multiblock.findOrigin(mc.level, pos, side, null);
+                ScreenBlockEntity te = (ScreenBlockEntity) mc.level.getBlockEntity(pos.toBlock());
+                ScreenData sc = (te == null) ? null : te.getScreen(side);
 
-		ci.cancel();
-	}
+                if (sc == null) return;
 
-	public List<ScreenBlockEntity> getScreens() {
-		return screenTracking;
-	}
+                int coordX = sc.mouseType * 15;
+                int coordY = coordX / 255;
+                coordX -= coordY * 255;
+                coordY *= 15;
+                if (sc.mouseType >= CefCursorType.NOT_ALLOWED.ordinal()) coordX -= 15;
 
-	public List<PadData> getPads() {
-		return padList;
-	}
+                RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+                poseStack.blit(new ResourceLocation("webdisplays", "textures/gui/cursors.png"), (screenWidth - 15) / 2, (screenHeight - 15) / 2, offset, coordX, coordY, 15, 15, 256, 256);
+                ci.cancel();
+        }
 
-	public class PadData {
+        public List<ScreenBlockEntity> getScreens() {
+                return screenTracking;
+        }
+
+        public List<PadData> getPads() {
+                return padList;
+        }
+
+        public class PadData {
 		
 		public CefBrowser view;
 		public final UUID id;
@@ -264,14 +250,12 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		event.register(ScreenModelLoader.SCREEN_LOADER.getPath(), new ScreenModelLoader());
 	}
 	
-	@Override
 	public void preInit() {
 		super.preInit();
 		mc = Minecraft.getInstance();
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 	
-	@Override
 	public void onCefInit() {
 		minePadRenderer = new MinePadRenderer();
 		laserPointerRenderer = new LaserPointerRenderer();
@@ -292,12 +276,10 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		findAdvancementToProgressField();
 	}
 	
-	@Override
 	public void postInit() {
 		((ReloadableResourceManager) mc.getResourceManager()).registerReloadListener(this);
 	}
 	
-	@Override
 	public Level getWorld(ResourceKey<Level> dim) {
 		Level ret = mc.level;
 //        if(dim == CURRENT_DIMENSION)
@@ -311,19 +293,16 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		}
 	}
 	
-	@Override
 	public void enqueue(Runnable r) {
 		mc.submit(r);
 	}
 	
-	@Override
 	public void displayGui(GuiData data) {
 		Screen gui = data.createGui(mc.screen, mc.level);
 		if (gui != null)
 			mc.setScreen(gui);
 	}
 	
-	@Override
 	public void trackScreen(ScreenBlockEntity tes, boolean track) {
 		int idx = -1;
 		for (int i = 0; i < screenTracking.size(); i++) {
@@ -340,8 +319,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 			screenTracking.remove(idx);
 	}
 	
-	@Override
-	public void onAutocompleteResult(NameUUIDPair[] pairs) {
+	public void onAutocompleteResult(String[] pairs) {
 		if (mc.screen != null && mc.screen instanceof WDScreen screen) {
 			if (pairs.length == 0)
 				(screen).onAutocompleteFailure();
@@ -350,12 +328,10 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		}
 	}
 	
-	@Override
 	public GameProfile[] getOnlineGameProfiles() {
 		return new GameProfile[]{mc.player.getGameProfile()};
 	}
 	
-	@Override
 	public void screenUpdateResolutionInGui(Vector3i pos, BlockSide side, Vector2i res) {
 		if (mc.screen != null && mc.screen instanceof GuiScreenConfig gsc) {
 			if (gsc.isForBlock(pos.toBlock(), side))
@@ -363,7 +339,6 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		}
 	}
 	
-	@Override
 	public void screenUpdateRotationInGui(Vector3i pos, BlockSide side, Rotation rot) {
 		if (mc.screen != null && mc.screen instanceof GuiScreenConfig gsc) {
 			if (gsc.isForBlock(pos.toBlock(), side))
@@ -371,7 +346,6 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		}
 	}
 	
-	@Override
 	public void screenUpdateAutoVolumeInGui(Vector3i pos, BlockSide side, boolean av) {
 		if (mc.screen != null && mc.screen instanceof GuiScreenConfig gsc) {
 			if (gsc.isForBlock(pos.toBlock(), side))
@@ -379,12 +353,10 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		}
 	}
 	
-	@Override
 	public void displaySetPadURLGui(ItemStack is, String padURL) {
 		mc.setScreen(new GuiSetURL2(is, padURL));
 	}
 	
-	@Override
 	public void openMinePadGui(UUID padId) {
 		PadData pd = padMap.get(padId);
 		
@@ -392,12 +364,11 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 			mc.setScreen(new GuiMinePad(pd));
 	}
 	
-	@Override
 	@Nonnull
 	public HasAdvancement hasClientPlayerAdvancement(@Nonnull ResourceLocation rl) {
 		if (advancementToProgressField != null && mc.player != null && mc.player.connection != null) {
 			ClientAdvancements cam = mc.player.connection.getAdvancements();
-			Advancement adv = cam.getAdvancements().get(rl);
+			var adv = cam.getTree().get(rl);
 			
 			if (adv == null)
 				return HasAdvancement.DONT_KNOW;
@@ -433,12 +404,10 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		return HasAdvancement.DONT_KNOW;
 	}
 	
-	@Override
 	public MinecraftServer getServer() {
 		return mc.getSingleplayerServer();
 	}
 	
-//	@Override
 //	public void handleJSResponseSuccess(int reqId, JSServerRequest type, byte[] data) {
 //		JSQueryDispatcher.ServerQuery q = jsDispatcher.fulfillQuery(reqId);
 //
@@ -452,7 +421,6 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 //		}
 //	}
 //
-//	@Override
 //	public void handleJSResponseError(int reqId, JSServerRequest type, int errCode, String err) {
 //		JSQueryDispatcher.ServerQuery q = jsDispatcher.fulfillQuery(reqId);
 //
@@ -462,12 +430,10 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 //			q.error(errCode, err);
 //	}
 	
-	@Override
 	public void setMiniservClientPort(int port) {
 		miniservPort = port;
 	}
 	
-	@Override
 	public void startMiniservClient() {
 		if (miniservPort <= 0) {
 			Log.warning("Can't start miniserv client: miniserv is disabled");
@@ -490,12 +456,10 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		msClientStarted = true;
 	}
 	
-	@Override
 	public boolean isMiniservDisabled() {
 		return miniservPort <= 0;
 	}
 	
-	@Override
 	public void closeGui(BlockPos bp, BlockSide bs) {
 		if (mc.screen instanceof WDScreen) {
 			WDScreen scr = (WDScreen) mc.screen;
@@ -505,12 +469,10 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		}
 	}
 	
-	@Override
 	public void renderRecipes() {
 		nextScreen = new RenderRecipe();
 	}
 	
-	@Override
 	public boolean isShiftDown() {
 		return Screen.hasShiftDown();
 	}
@@ -518,7 +480,6 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	
 	/**************************************** RESOURCE MANAGER METHODS ****************************************/
 	
-	@Override
 	public void onResourceManagerReload(ResourceManager resourceManager) {
 		Log.info("Resource manager reload: clearing GUI cache...");
 		GuiLoader.clearCache();
@@ -526,7 +487,6 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	
 	/**************************************** JS HANDLER METHODS ****************************************/
 	
-//	@Override
 //	public boolean handleQuery(IBrowser browser, long queryId, String query, boolean persistent, IJSQueryCallback cb) {
 //		if (browser != null && persistent && query != null && cb != null) {
 //			query = query.toLowerCase();
@@ -560,7 +520,6 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 //		return false;
 //	}
 //
-//	@Override
 //	public void cancelQuery(IBrowser browser, long queryId) {
 //	}
 
@@ -703,7 +662,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 	@SubscribeEvent
 	public void onRenderPlayerHand(RenderHandEvent ev) {
 		Item item = ev.getItemStack().getItem();
-		IItemRenderer renderer;
+		IItemRenderer renderer = null;
 		
 		if (ItemRegistry.MINEPAD.isPresent() && ItemRegistry.LASER_POINTER.isPresent()) {
 			if (item == ItemRegistry.MINEPAD.get())
@@ -716,7 +675,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 			if (ev.getHand() == InteractionHand.OFF_HAND)
 				handSide = handSide.getOpposite();
 			
-			if (renderer.render(ev.getPoseStack(), ev.getItemStack(), (handSide == HumanoidArm.RIGHT) ? 1.0f : -1.0f, ev.getSwingProgress(), ev.getEquipProgress(), ev.getMultiBufferSource(), ev.getPackedLight())) {
+                        if (renderer != null && renderer.render(ev.getPoseStack(), ev.getItemStack(), (handSide == HumanoidArm.RIGHT) ? 1.0f : -1.0f, ev.getSwingProgress(), ev.getEquipProgress(), ev.getMultiBufferSource(), ev.getPackedLight())) {
 				ev.setCanceled(true);
 			}
 		}
@@ -741,7 +700,7 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		Vec3 lookVec = mc.player.getLookAngle();
 		Vec3 end = start.add(lookVec.x * dist, lookVec.y * dist, lookVec.z * dist);
 		
-		return mc.level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, null));
+			return mc.level.clip(new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player));
 	}
 	
 	private void updateInventory(NonNullList<ItemStack> inv, ItemStack heldStack, int cnt) {
@@ -820,9 +779,8 @@ public class ClientProxy extends SharedProxy implements ResourceManagerReloadLis
 		return null;
 	}
 	
-	@Override
-	public BlockGetter getWorld(NetworkEvent.Context context) {
-		BlockGetter senderLevel = super.getWorld(context);
+	public BlockGetter getWorld(Supplier<?> context) {
+		BlockGetter senderLevel = Minecraft.getInstance().level;
 		if (senderLevel == null) return Minecraft.getInstance().level;
 		return senderLevel;
 	}
